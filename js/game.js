@@ -20,6 +20,7 @@
   const ROAD_HALF = 150;           // half width of drivable road in world units
   const SHIFT_LEN = 150;           // seconds per shift
   const MAXI_SCREEN = 0.80;        // maxi sits 80% down the screen (lots of road ahead)
+  const GRAB_X = 120;              // lateral reach for picking up a roadside waver
 
   // ---------- audio (tiny WebAudio fx) ----------
   let actx = null;
@@ -91,7 +92,7 @@
     ensureSpawned();
     running = true; lastT = performance.now();
     UI.showHud();
-    UI.toast('🙋 Slow down beside a waving passenger to pick them up!');
+    UI.toast('🙋 Steer into a waving passenger’s lane to pick them up!');
     requestAnimationFrame(loop);
   }
 
@@ -144,42 +145,33 @@
     cam = maxi.y - H * (1 - MAXI_SCREEN);
     ensureSpawned();
 
-    // passenger pickup — wide, scroll-friendly zone; ease off the gas to grab them
-    let nearWaver = false;
+    // passenger pickup — pure proximity, NO speed gate. Just steer into the
+    // waver's lane and they hop in (steering + braking at once is too fiddly
+    // on a phone, so we don't require slowing down).
     world.passengers.forEach((p) => {
       p.update(dt);
       p._near = false;
-      if (p.picked) return;
+      if (p.picked || maxi.passenger) return;
       const dx = p.x - maxi.x, dy = p.y - maxi.y;
-      // generous: reachable across the lane, and a tall forward band so the
-      // window doesn't fly past between frames at speed
-      const inZone = Math.abs(dx) < 110 && dy < 130 && dy > -120;
-      if (maxi.passenger) return;
-      if (inZone) {
-        p._near = true; // highlight so the player knows they're lined up
-        if (maxi.speed < ms * 0.85) {
-          p.picked = true; p._near = false;
-          maxi.passenger = p.a;
-          world.dropoff = new G.Dropoff(
-            (Math.random() * 2 - 1) * (ROAD_HALF - 30),
-            maxi.y + 700 + Math.random() * 700
-          );
-          beep(660, 0.12, 'triangle', 0.07);
-          UI.fareCard(p.a, 0);
-          UI.toast('🙋 ' + p.a.quip);
-        } else {
-          nearWaver = true; // in range but flooring it — prompt to ease off
-        }
-      } else if (Math.abs(dx) < 120 && dy < -120 && dy > -180 && maxi.speed > ms * 0.85) {
-        // blew straight past a waving passenger too fast
-        if (!p._annoyed) { p._annoyed = true; run.annoyed++; }
+      // wide lane reach + tall forward band so it can't slip between frames
+      if (Math.abs(dx) < GRAB_X && dy < 140 && dy > -120) {
+        p.picked = true;
+        maxi.passenger = p.a;
+        world.dropoff = new G.Dropoff(
+          (Math.random() * 2 - 1) * (ROAD_HALF - 30),
+          maxi.y + 700 + Math.random() * 700
+        );
+        beep(660, 0.12, 'triangle', 0.07);
+        UI.fareCard(p.a, 0);
+        UI.toast('🙋 ' + p.a.quip);
+      } else if (Math.abs(dx) < GRAB_X) {
+        // approaching in-lane — glow green so the player steers to hold the line
+        if (dy > -120 && dy < 600) p._near = true;
+      } else if (dy < -130 && dy > -200 && !p._annoyed) {
+        // scrolled past on the far side, never reached — vex passenger
+        p._annoyed = true; run.annoyed++;
       }
     });
-    // throttled "ease off the gas" hint
-    if (nearWaver && !maxi.passenger) {
-      run.hintT = (run.hintT || 0) - dt;
-      if (run.hintT <= 0) { run.hintT = 2.5; UI.toast('🛑 Ease off the gas to pick them up!'); }
-    }
 
     // dropoff
     if (world.dropoff) {
