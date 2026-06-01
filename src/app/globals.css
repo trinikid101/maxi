@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Premium dark theme — Linear / Arc inspired. */
+  --bg: 240 10% 4%;
+  --surface: 240 8% 8%;
+  --surface-2: 240 7% 12%;
+  --border: 240 6% 18%;
+  --muted: 240 5% 55%;
+  --fg: 240 20% 96%;
+  --accent: 256 90% 66%;
+  --accent-fg: 0 0% 100%;
+
+  --deep: 256 85% 66%;
+  --focus: 199 89% 58%;
+  --admin: 160 60% 50%;
+  --rest: 38 92% 60%;
+  --habit: 320 70% 62%;
+  --warn: 0 80% 63%;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image:
+    radial-gradient(60% 50% at 50% 0%, hsl(256 90% 66% / 0.08), transparent 70%),
+    radial-gradient(40% 40% at 100% 0%, hsl(199 89% 58% / 0.06), transparent 70%);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 99px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer components {
+  .glass {
+    background: hsl(var(--surface) / 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border));
+  }
+  .card {
+    @apply rounded-2xl border bg-surface/70 p-5 shadow-sm backdrop-blur;
+  }
+}

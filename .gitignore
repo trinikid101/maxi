@@ -8,3 +8,14 @@ Thumbs.db
 # node (if tooling is added later)
 node_modules/
 npm-debug.log*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env / secrets
+.env
+.env.local
+.env*.local

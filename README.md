@@ -1,114 +1,102 @@
-# 🚐 Maxi Taxi Madness: Trini Road King
+# Life OS AI
 
-A free-to-play arcade driving + business sim inspired by Trinidad & Tobago's
-iconic maxi taxis. Pick up passengers, dodge potholes and goats, blow your
-horn, bank your fares, upgrade your maxi, and climb the Road King ranks.
+**The operating system for your entire life — not just a task manager.**
 
-> **What's in this repo:** a **fully playable real-time 3D game** (Three.js,
-> GTA-style chase camera) that runs in any browser — desktop or mobile — with
-> **no build step**. You drive a 3D maxi down an endless Trini street: pick up
-> passengers, dodge hazards, bank fares, and upgrade. A
-> [production design document](DESIGN.md) maps it to the full Unity/Unreal
-> mobile vision (open world, multiplayer, store deployment).
->
-> Three.js is **vendored** at `vendor/three.module.js`, so the game has zero
-> network dependencies and works fully offline.
+Life OS AI automatically engineers your optimal day. You enter tasks, goals,
+habits, calendar events, and your energy levels; the AI scheduling engine
+produces a realistic, energy-matched, anti-overwhelm day plan — and continuously
+re-optimizes it as the day unfolds. It's meant to feel like a personal chief of
+staff, executive assistant, productivity coach, and life strategist combined.
+
+> This repository contains a fully working **foundation**: a powerful
+> deterministic scheduling engine (the hard part) plus a premium calendar-first
+> UI. It runs end-to-end with **no API keys or accounts required**. External
+> integrations (OpenAI coach, Clerk auth, Supabase persistence, calendar sync)
+> are scaffolded behind environment flags so they can be switched on later.
 
 ---
 
-## ▶️ Play it now
-
-No install, no tooling. Just open the game:
+## Quick start
 
 ```bash
-# Option A — double-click index.html in a file browser
-# Option B — serve it locally (recommended; enables audio + screenshots)
-cd maxi
-python3 -m http.server 8000
-# then visit http://localhost:8000
+npm install
+npm run dev      # http://localhost:3000
+npm test         # run the scheduling-engine unit tests
+npm run build    # production build
 ```
 
-On a phone: serve it on your LAN and open the URL in mobile Safari/Chrome,
-or "Add to Home Screen" for a fullscreen, app-like experience.
+The app boots with realistic demo data so you can see the engine working
+immediately. Everything persists to `localStorage`. Hit **Reset** in the header
+to restore the demo.
 
 ---
 
-## 🎮 Controls
+## What's implemented
 
-| Action | Touch (phone) | Keyboard (desktop) |
-| --- | --- | --- |
-| Steer | Drag the screen left/right | `A` / `D` or `←` / `→` |
-| Brake | Hold **BRAKE** button | `S` or `↓` |
-| Horn  | Hold **HORN** button | `Space` |
-| Gas   | Automatic (manage your fuel!) | Automatic |
+### The AI scheduling engine (`src/lib/engine/`)
 
-**Goal:** steer into a waving passenger's lane — their ground ring glows green
-and they hop in — then reach the glowing green 🏁 beacon to bank the fare.
-Survive the shift, dodge hazards, and keep an eye on your fuel.
+A fully deterministic, dependency-free TypeScript engine — the heart of the
+product. It blends 20+ productivity methodologies and decides which to emphasize
+based on your situation:
 
----
+| Module | Responsibility |
+| --- | --- |
+| `scoring.ts` | Per-task Priority / Urgency / Difficulty / Energy / Focus / Stress / Reward scores, Eisenhower quadrant, and a composite **execution order**. |
+| `energy.ts` | Builds a 24-hour circadian energy curve from your self-reports and matches task energy demand to available energy. |
+| `scheduler.ts` | The placement engine: schedules around fixed events, energy-matches deep work to peak windows, **batches** similar tasks, inserts mandatory **breaks/buffers**, respects a **deep-work ceiling**, honors **dependencies**, stacks **habits**, and protects **recovery**. |
+| `replan.ts` | Adaptive replanning — re-flows the *remaining* day when a task overruns, finishes early, is skipped, or when you flag overwhelm. |
+| `lifescore.ts` | Multi-dimensional Life Score (productivity, health, habits, consistency, goals, learning, fitness, relationships). |
+| `gamification.ts` | XP, a 1–100 level curve, streaks, and achievements. |
+| `coach.ts` | Deterministic executive-coach briefing + "what should I do right now?". |
 
-## ✅ What the prototype implements (from the brief)
+Methodologies the engine encodes: Eisenhower Matrix, Time Blocking, Time
+Batching, Pomodoro, Parkinson's Law, Deep Work, 80/20, Atomic Habits / Habit
+Stacking, Energy Management, Flow protection, Cognitive Load Reduction, Decision
+Fatigue Prevention, Circadian Scheduling, Recovery Scheduling, Peak-Performance
+Planning, and Goal-Alignment analysis.
 
-- **Core loop** — pick up → drive → drop off → earn → upgrade → repeat, in
-  short 2–3 minute shifts.
-- **The maxi, recreated** — white body with a colour **band stripe**, big
-  windscreen, drawn procedurally to echo the reference photo.
-- **Three bands with unique bonuses** — 🔴 Red (faster acceleration),
-  🟢 Green (better fuel economy), 🟡 Yellow (more passenger income).
-- **Passenger system** — School Child, Office Worker, Market Vendor, Tourist,
-  Drunk Limer, Politician, and a rare Celebrity, each with fares, tips, and
-  Trini one-liners.
-- **Funny Trini events** — goats crossing, Carnival road blocks, flash
-  flooding, police permit checks, soca blasting, maxi-vs-maxi road rage, and
-  more.
-- **Addictive reward cadence** — a route bonus every 30 seconds so the player
-  is never far from a dopamine hit.
-- **Upgrade system / garage** — Engine, Suspension, Brakes, Horn, and Fuel
-  Tank, with a scaling cost curve and persistent levels.
-- **Viral results screen** — "Horn Pressed: 178", "Near Misses: 43",
-  "Passengers Annoyed: 12", a shareable hashtag card, and PNG screenshot
-  export.
-- **Async multiplayer leaderboard** — your best score ranked against rival
-  drivers.
-- **Idle income** — your maxi empire earns cash while you're away.
-- **Persistence** — bank, day, band choice, and upgrades saved via
-  `localStorage` (the stand-in for cloud save).
-- **Mobile-first + 60 FPS** — `requestAnimationFrame` loop, DPR-aware canvas,
-  touch controls, safe-area insets, WebAudio horn/ding SFX.
+The engine is covered by unit tests in `src/lib/engine/engine.test.ts`
+(`npm test`).
 
-See [DESIGN.md](DESIGN.md) for the full feature map, including everything that
-belongs in the production 3D build (open-world map, Battle Pass, rare skins
-like the Carnival King / Gold / Chrome / Zombie maxis, tournaments, push
-notifications, etc.).
+### The app (`src/app`, `src/components`)
+
+A premium, calendar-first dark UI (Next.js App Router + Tailwind, shadcn-style
+primitives):
+
+- **What now?** hero — the single most important answer at any moment, with
+  Focus / Done / Skip and an "I'm overwhelmed → simplify" action.
+- **Engineered schedule timeline** — energy-matched time blocks on a real clock,
+  with a live "now" line, rationale tooltips, and one-click re-optimize.
+- **Tasks** — quick composer with importance/difficulty/focus/stress/reward,
+  Eisenhower tagging, execution-score ranking, and a deferred-tasks tray.
+- **Habits** — auto-placed and habit-stacked into the day.
+- **Energy engine** — visualize and tune your morning/afternoon/evening energy.
+- **AI coach** — always-on deterministic briefing + an "ask anything" box
+  (uses OpenAI when a key is present).
+- **Life Score**, **XP / levels / achievements**, and a **Focus Mode** with a
+  Pomodoro timer.
 
 ---
 
-## 🗂️ Project structure
+## Configuration
 
-```
-index.html              # markup: WebGL canvas, HUD, menus, results
-css/style.css           # Caribbean-palette, mobile-first styling
-vendor/three.module.js  # vendored Three.js r160 (no CDN, works offline)
-js/data.js              # config: bands, passengers, events, cities, upgrades, save/load
-js/ui.js                # screen routing, HUD, garage, leaderboard, viral cards
-js/game3d.js            # 3D engine: scene, chase cam, loop, input, run lifecycle
-js/game.js, js/entities.js  # legacy 2D Canvas prototype (kept for reference, not loaded)
-DESIGN.md               # production design doc (full mobile vision + roadmap)
-```
+All environment variables are **optional** — see `.env.example`.
 
-Vanilla JS + Three.js (vendored) — zero build, zero CDN. The original 2D
-Canvas prototype is preserved under `js/game.js` + `js/entities.js` for
-reference; `index.html` now loads the 3D build (`js/game3d.js`).
+- `OPENAI_API_KEY` — upgrades the coach's "ask anything" replies via
+  `/api/coach`. Without it, a built-in strategist answers.
+- Clerk / Supabase keys — placeholders for when you add auth and durable
+  persistence.
 
 ---
 
-## 🛣️ From prototype to store-ready
+## Intended tech stack & roadmap
 
-This web build is the **playable design spec**. The next milestone is porting
-the validated loop into Unity (recommended for mobile) with 3D stylised
-assets, the open-world Trinidad map, live-ops backend (leaderboards,
-tournaments, cloud save), and store builds for iOS + Android. The full plan,
-including tech stack and a phased roadmap, lives in [DESIGN.md](DESIGN.md).
+Built on **Next.js + TypeScript + Tailwind** with shadcn-style components, ready
+to deploy on **Vercel**. The product spec also calls for Clerk (auth), Supabase
+(Postgres + realtime/WebSockets), OpenAI, and calendar sync (Google / Apple /
+Outlook). Those integrations are intentionally isolated behind the engine and
+env flags so the core experience works today and they can be layered in without
+touching the scheduling logic.
 
-🇹🇹 *"One more run."*
+The previous prototype in this repo (a taxi game) was moved to
+[`legacy-taxi-game/`](./legacy-taxi-game/) and is untouched.
