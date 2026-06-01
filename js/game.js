@@ -144,17 +144,21 @@
     cam = maxi.y - H * (1 - MAXI_SCREEN);
     ensureSpawned();
 
-    // passenger pickup — generous range; slow down beside a waver to grab them
+    // passenger pickup — wide, scroll-friendly zone; ease off the gas to grab them
     let nearWaver = false;
     world.passengers.forEach((p) => {
       p.update(dt);
+      p._near = false;
       if (p.picked) return;
       const dx = p.x - maxi.x, dy = p.y - maxi.y;
-      const inZone = Math.abs(dx) < 85 && Math.abs(dy) < 90;
+      // generous: reachable across the lane, and a tall forward band so the
+      // window doesn't fly past between frames at speed
+      const inZone = Math.abs(dx) < 110 && dy < 130 && dy > -120;
       if (maxi.passenger) return;
       if (inZone) {
-        if (maxi.speed < ms * 0.78) {
-          p.picked = true;
+        p._near = true; // highlight so the player knows they're lined up
+        if (maxi.speed < ms * 0.85) {
+          p.picked = true; p._near = false;
           maxi.passenger = p.a;
           world.dropoff = new G.Dropoff(
             (Math.random() * 2 - 1) * (ROAD_HALF - 30),
@@ -164,17 +168,17 @@
           UI.fareCard(p.a, 0);
           UI.toast('🙋 ' + p.a.quip);
         } else {
-          nearWaver = true; // in range but too fast — prompt to brake
+          nearWaver = true; // in range but flooring it — prompt to ease off
         }
-      } else if (Math.abs(dx) < 95 && dy < 0 && dy > -50 && maxi.speed > ms * 0.85) {
-        // blew past a waving passenger too fast
+      } else if (Math.abs(dx) < 120 && dy < -120 && dy > -180 && maxi.speed > ms * 0.85) {
+        // blew straight past a waving passenger too fast
         if (!p._annoyed) { p._annoyed = true; run.annoyed++; }
       }
     });
-    // throttled "brake to pick up" hint
+    // throttled "ease off the gas" hint
     if (nearWaver && !maxi.passenger) {
       run.hintT = (run.hintT || 0) - dt;
-      if (run.hintT <= 0) { run.hintT = 3; UI.toast('🛑 Brake to pick them up!'); }
+      if (run.hintT <= 0) { run.hintT = 2.5; UI.toast('🛑 Ease off the gas to pick them up!'); }
     }
 
     // dropoff

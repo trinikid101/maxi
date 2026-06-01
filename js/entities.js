@@ -117,10 +117,19 @@ GAME.Passenger = class {
   draw(ctx, sx, sy) {
     ctx.save();
     ctx.translate(sx, sy);
-    // ground marker ring
-    ctx.strokeStyle = this.a.color;
-    ctx.globalAlpha = 0.5;
-    ctx.lineWidth = 3;
+    // ground marker ring — turns green & solid when the maxi is lined up
+    if (this._near) {
+      ctx.fillStyle = 'rgba(16,185,129,0.30)';
+      ctx.beginPath();
+      ctx.arc(0, 6, this.r + 16 + Math.sin(this.wave) * 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 4;
+    } else {
+      ctx.strokeStyle = this.a.color;
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 3;
+    }
     ctx.beginPath();
     ctx.arc(0, 6, this.r + 6 + Math.sin(this.wave) * 2, 0, Math.PI * 2);
     ctx.stroke();
