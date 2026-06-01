@@ -4,11 +4,15 @@ A free-to-play arcade driving + business sim inspired by Trinidad & Tobago's
 iconic maxi taxis. Pick up passengers, dodge potholes and goats, blow your
 horn, bank your fares, upgrade your maxi, and climb the Road King ranks.
 
-> **What's in this repo:** a **fully playable HTML5 prototype** of the core
-> gameplay loop that runs in any browser (desktop or mobile) with **no build
-> step**, plus a [production design document](DESIGN.md) that maps this
-> prototype to the full Unity/Unreal mobile vision (3D, multiplayer, store
-> deployment).
+> **What's in this repo:** a **fully playable real-time 3D game** (Three.js,
+> GTA-style chase camera) that runs in any browser — desktop or mobile — with
+> **no build step**. You drive a 3D maxi down an endless Trini street: pick up
+> passengers, dodge hazards, bank fares, and upgrade. A
+> [production design document](DESIGN.md) maps it to the full Unity/Unreal
+> mobile vision (open world, multiplayer, store deployment).
+>
+> Three.js is **vendored** at `vendor/three.module.js`, so the game has zero
+> network dependencies and works fully offline.
 
 ---
 
@@ -38,9 +42,9 @@ or "Add to Home Screen" for a fullscreen, app-like experience.
 | Horn  | Hold **HORN** button | `Space` |
 | Gas   | Automatic (manage your fuel!) | Automatic |
 
-**Goal:** slow down beside a waving passenger to pick them up, then reach the
-glowing 🏁 drop-off to bank the fare. Survive the shift, dodge hazards, and
-keep an eye on your fuel.
+**Goal:** steer into a waving passenger's lane — their ground ring glows green
+and they hop in — then reach the glowing green 🏁 beacon to bank the fare.
+Survive the shift, dodge hazards, and keep an eye on your fuel.
 
 ---
 
@@ -83,18 +87,19 @@ notifications, etc.).
 ## 🗂️ Project structure
 
 ```
-index.html        # markup: canvas, HUD, menus, results
-css/style.css     # Caribbean-palette, mobile-first styling
-js/data.js        # config: bands, passengers, events, cities, upgrades, save/load
-js/entities.js    # the Maxi, passengers, drop-offs, hazards (canvas drawing)
-js/ui.js          # screen routing, HUD, garage, leaderboard, viral cards
-js/game.js        # engine: loop, input, spawning, collisions, run lifecycle
-DESIGN.md         # production design doc (full mobile vision + roadmap)
+index.html              # markup: WebGL canvas, HUD, menus, results
+css/style.css           # Caribbean-palette, mobile-first styling
+vendor/three.module.js  # vendored Three.js r160 (no CDN, works offline)
+js/data.js              # config: bands, passengers, events, cities, upgrades, save/load
+js/ui.js                # screen routing, HUD, garage, leaderboard, viral cards
+js/game3d.js            # 3D engine: scene, chase cam, loop, input, run lifecycle
+js/game.js, js/entities.js  # legacy 2D Canvas prototype (kept for reference, not loaded)
+DESIGN.md               # production design doc (full mobile vision + roadmap)
 ```
 
-Pure vanilla JS + Canvas 2D — zero dependencies, zero build. This keeps the
-prototype instantly runnable and easy to iterate on while validating that the
-loop is *fun* before committing to a heavy 3D engine pipeline.
+Vanilla JS + Three.js (vendored) — zero build, zero CDN. The original 2D
+Canvas prototype is preserved under `js/game.js` + `js/entities.js` for
+reference; `index.html` now loads the 3D build (`js/game3d.js`).
 
 ---
 
