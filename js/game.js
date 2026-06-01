@@ -19,6 +19,7 @@
   let shake = 0;
   const ROAD_HALF = 150;           // half width of drivable road in world units
   const SHIFT_LEN = 150;           // seconds per shift
+  const MAXI_SCREEN = 0.80;        // maxi sits 80% down the screen (lots of road ahead)
 
   // ---------- audio (tiny WebAudio fx) ----------
   let actx = null;
@@ -64,7 +65,7 @@
       if (roll < 0.42) {
         // passenger at roadside (just inside the edge)
         const side = Math.random() < 0.5 ? -1 : 1;
-        world.passengers.push(new G.Passenger(G.pickPassenger(), side * (ROAD_HALF - 18), spawnY));
+        world.passengers.push(new G.Passenger(G.pickPassenger(), side * (ROAD_HALF - 50), spawnY));
       } else if (roll < 0.92) {
         const kinds = ['pothole', 'pothole', 'goat', 'limer', 'flood', 'roadblock'];
         const kind = kinds[(Math.random() * kinds.length) | 0];
@@ -80,7 +81,7 @@
   function startRun() {
     maxi = new G.Maxi(G.BANDS[save.band]);
     maxi.y = 0; maxi.x = 0; maxi.speed = 0;
-    cam = -H * 0.7; spawnY = 0;
+    cam = -H * (1 - MAXI_SCREEN); spawnY = 0;
     world = { passengers: [], hazards: [], dropoff: null };
     run = {
       money: 0, xp: 0, fuel: fuelMax(), time: SHIFT_LEN,
@@ -90,6 +91,7 @@
     ensureSpawned();
     running = true; lastT = performance.now();
     UI.showHud();
+    UI.toast('🙋 Slow down beside a waving passenger to pick them up!');
     requestAnimationFrame(loop);
   }
 
@@ -138,30 +140,42 @@
     run.fuel -= dt * (1.4 + maxi.speed / 260) * maxi.band.fuelMul;
     if (run.fuel <= 0) { run.fuel = 0; endRun('fuel'); return; }
 
-    // camera follows
-    cam = maxi.y - H * 0.7;
+    // camera follows — keep the maxi low so the player sees the road ahead
+    cam = maxi.y - H * (1 - MAXI_SCREEN);
     ensureSpawned();
 
-    // passenger pickup
+    // passenger pickup — generous range; slow down beside a waver to grab them
+    let nearWaver = false;
     world.passengers.forEach((p) => {
       p.update(dt);
-      if (p.picked || maxi.passenger) return;
+      if (p.picked) return;
       const dx = p.x - maxi.x, dy = p.y - maxi.y;
-      if (Math.abs(dx) < 60 && Math.abs(dy) < 60 && maxi.speed < ms * 0.55) {
-        p.picked = true;
-        maxi.passenger = p.a;
-        world.dropoff = new G.Dropoff(
-          (Math.random() * 2 - 1) * (ROAD_HALF - 30),
-          maxi.y + 700 + Math.random() * 700
-        );
-        beep(660, 0.12, 'triangle', 0.07);
-        UI.fareCard(p.a, 0);
-        UI.toast('🙋 ' + p.a.quip);
-      } else if (!maxi.passenger && Math.abs(dx) < 90 && dy < 0 && dy > -40 && maxi.speed > ms * 0.7) {
+      const inZone = Math.abs(dx) < 85 && Math.abs(dy) < 90;
+      if (maxi.passenger) return;
+      if (inZone) {
+        if (maxi.speed < ms * 0.78) {
+          p.picked = true;
+          maxi.passenger = p.a;
+          world.dropoff = new G.Dropoff(
+            (Math.random() * 2 - 1) * (ROAD_HALF - 30),
+            maxi.y + 700 + Math.random() * 700
+          );
+          beep(660, 0.12, 'triangle', 0.07);
+          UI.fareCard(p.a, 0);
+          UI.toast('🙋 ' + p.a.quip);
+        } else {
+          nearWaver = true; // in range but too fast — prompt to brake
+        }
+      } else if (Math.abs(dx) < 95 && dy < 0 && dy > -50 && maxi.speed > ms * 0.85) {
         // blew past a waving passenger too fast
         if (!p._annoyed) { p._annoyed = true; run.annoyed++; }
       }
     });
+    // throttled "brake to pick up" hint
+    if (nearWaver && !maxi.passenger) {
+      run.hintT = (run.hintT || 0) - dt;
+      if (run.hintT <= 0) { run.hintT = 3; UI.toast('🛑 Brake to pick them up!'); }
+    }
 
     // dropoff
     if (world.dropoff) {
