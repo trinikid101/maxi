@@ -2,6 +2,8 @@
 
 **The operating system for your entire life — not just a task manager.**
 
+🔗 **Live demo:** https://trinikid101.github.io/maxi/ _(auto-deployed from this branch via GitHub Pages)_
+
 Life OS AI automatically engineers your optimal day. You enter tasks, goals,
 habits, calendar events, and your energy levels; the AI scheduling engine
 produces a realistic, energy-matched, anti-overwhelm day plan — and continuously

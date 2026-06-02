@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useDay } from "@/lib/useDay";
+import { coachAnswer } from "@/lib/engine";
 import { Card, CardBody, CardHeader } from "./ui/card";
 import { Button } from "./ui/button";
 import { Brain, Send, Loader2 } from "lucide-react";
@@ -27,26 +28,32 @@ export function CoachPanel() {
     if (!q.trim()) return;
     setLoading(true);
     setAnswer(null);
+    const ctx = {
+      loadScore: schedule.loadScore,
+      overall: lifeScore.overall,
+      emphasis: schedule.emphasis,
+      deferred: schedule.deferred.length,
+      streak: state.streak,
+      blocks: schedule.blocks.map((b) => ({ title: b.title, kind: b.kind })),
+    };
+
+    // On a static deployment there is no backend — answer client-side. When a
+    // server is present, it can layer OpenAI on top; we fall back gracefully.
+    if (process.env.NEXT_PUBLIC_STATIC === "true") {
+      setAnswer(coachAnswer(q, ctx));
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          question: q,
-          context: {
-            loadScore: schedule.loadScore,
-            overall: lifeScore.overall,
-            emphasis: schedule.emphasis,
-            deferred: schedule.deferred.length,
-            streak: state.streak,
-            blocks: schedule.blocks.map((b) => ({ title: b.title, kind: b.kind })),
-          },
-        }),
+        body: JSON.stringify({ question: q, context: ctx }),
       });
       const data = await res.json();
       setAnswer(data.answer);
     } catch {
-      setAnswer("I'm offline right now, but the briefing above is your plan. Win the next block.");
+      setAnswer(coachAnswer(q, ctx));
     } finally {
       setLoading(false);
     }

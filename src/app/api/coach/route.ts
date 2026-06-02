@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
+import { coachAnswer, type CoachQAContext } from "@/lib/engine/coach";
 
 export const runtime = "nodejs";
 
-interface CoachContext {
-  loadScore: number;
-  overall: number;
-  emphasis: string[];
-  deferred: number;
-  streak: number;
-  blocks: { title: string; kind: string }[];
-}
+type CoachContext = CoachQAContext;
 
 const SYSTEM = `You are the Life OS AI productivity coach: an elite executive coach,
 chief of staff, and performance strategist. You are direct, warm, and tactical.
@@ -59,21 +53,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ answer: fallback(question, context), source: "local" });
-}
-
-function fallback(question: string, c: CoachContext): string {
-  const q = question.toLowerCase();
-  const next = c.blocks.find((b) => b.kind === "deep" || b.kind === "focus") ?? c.blocks[0];
-
-  if (q.includes("overwhelm") || q.includes("stress") || q.includes("too much")) {
-    return `Breathe. Your load is ${c.loadScore}/100 — that's a signal, not a verdict. Do one thing: ${next?.title ?? "your top block"}. I've already protected recovery and deferred ${c.deferred} item(s). A finished realistic day beats an abandoned ambitious one.`;
-  }
-  if (q.includes("focus") || q.includes("procrastinat") || q.includes("start")) {
-    return `Procrastination is a decision-fatigue problem, not a willpower one. Set a 25-minute timer and open only ${next?.title ?? "your next block"}. No tabs, no Slack. Momentum is the cure — you don't need motivation, you need a start.`;
-  }
-  if (q.includes("goal") || q.includes("priorit")) {
-    return `Your highest-leverage move today is the first deep-work block. We're emphasizing ${c.emphasis.slice(0, 2).join(" + ")}. Protect that block like a board meeting; everything else is negotiable.`;
-  }
-  return `Here's the truth: your plan is sound (${c.overall}/100 life score, ${c.streak}-day streak). The only question that matters is the next 25 minutes. Start ${next?.title ?? "your top block"} now — clarity comes from motion.`;
+  return NextResponse.json({ answer: coachAnswer(question, context), source: "local" });
 }
