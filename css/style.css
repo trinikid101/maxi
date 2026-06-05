@@ -352,6 +352,14 @@ body {
   font-size: .8rem; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: .15s;
 }
 .upgrade-btn:hover { transform: translateY(-1px); }
+.upgrade-btn.active {
+  background: var(--primary); border-color: var(--primary); color: #fff; cursor: default;
+}
+.upgrade-btn.active:hover { transform: none; }
+.upgrade-btn.disabled, .upgrade-btn:disabled.disabled {
+  opacity: .35; cursor: not-allowed;
+}
+.upgrade-btn.disabled:hover { transform: none; }
 .upgrade-btn.light:hover { border-color: var(--light); color: var(--light); }
 .upgrade-btn.medium:hover { border-color: var(--medium); color: var(--medium); }
 .upgrade-btn.tough:hover { border-color: var(--tough); color: var(--tough); }

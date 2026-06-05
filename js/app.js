@@ -180,23 +180,34 @@
     var box = $('upgrade-options');
     var label = $('upgrade-label');
     box.innerHTML = '';
-    var higher = TIERS.filter(function (t) { return t > current.goal; });
-    if (!higher.length) {
-      label.textContent = "You're at the top tier (30 pts) 🏔️";
-      return;
-    }
-    label.textContent = 'Need more room? Increase difficulty:';
-    higher.forEach(function (t) {
+    label.textContent = 'Difficulty:';
+    var committed = committedPoints();
+
+    TIERS.forEach(function (t) {
       var b = el('button', 'upgrade-btn ' + DIFFICULTY[t].cls);
       b.type = 'button';
-      b.textContent = '↑ ' + t + ' · ' + DIFFICULTY[t].name;
-      b.addEventListener('click', function () { increaseDifficulty(t); });
+      b.textContent = t + ' · ' + DIFFICULTY[t].name;
+
+      var isCurrent = t === current.goal;
+      var tooLow = t < committed;   // can't fit the tasks already planned
+
+      if (isCurrent) {
+        b.classList.add('active');
+        b.disabled = true;
+      } else if (tooLow) {
+        b.classList.add('disabled');
+        b.disabled = true;
+        b.title = 'Your planned tasks already use ' + committed + ' pts';
+      } else {
+        b.addEventListener('click', function () { changeDifficulty(t); });
+      }
       box.appendChild(b);
     });
   }
 
-  function increaseDifficulty(goal) {
-    if (!current || goal <= current.goal) return;
+  function changeDifficulty(goal) {
+    if (!current || goal === current.goal) return;
+    if (goal < committedPoints()) return;  // safety: don't drop below planned points
     current.goal = goal;
     current.difficulty = DIFFICULTY[goal].name;
     save(LS_CURRENT, current);
