@@ -1,47 +1,56 @@
 /* ===================== DayQuest ===================== *
  * A simple gamified task list.
- * Pick a difficulty (10/20/30 pts), build a task list (1–3 pts each),
- * tick tasks off to fill the bar, then end the day for a score + A–F grade.
- * Every finished day is stored in localStorage and shown in Analytics.
- * No dependencies, no build step — drop onto any static host (e.g. Hostinger).
+ * Pick a difficulty (10/15/20/25/30 pts), build a task list (1–3 pts each)
+ * WITHIN that point budget, tick tasks off to fill the bar, then end the day
+ * for a score + A–F grade. Every finished day is stored in localStorage and
+ * shown in Analytics. Optional Google Sign-In personalizes the app.
+ * No build step — drop onto any static host (e.g. Hostinger).
  * ==================================================== */
 
 (function () {
   'use strict';
 
-  /* ---------- Storage keys & helpers ---------- */
+  /* ===================== CONFIG ===================== */
+  /* Paste your Google OAuth 2.0 *Web* Client ID here to enable Sign in with
+   * Google. Leave it as '' to hide the button and show setup instructions.
+   * Create one at https://console.cloud.google.com/apis/credentials and add
+   * your site (and http://localhost:8000 for local testing) to the
+   * "Authorized JavaScript origins". */
+  var GOOGLE_CLIENT_ID = '';
+
+  /* ---------- Storage keys ---------- */
   var LS_CURRENT = 'dayquest.current.v1';   // the in-progress day (or null)
   var LS_HISTORY = 'dayquest.history.v1';   // array of finished days
+  var LS_USER    = 'dayquest.user.v1';      // signed-in Google profile (or null)
 
   function load(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) {
-      return fallback;
-    }
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
   }
   function save(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); }
-    catch (e) { /* storage full or blocked — app still works for the session */ }
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* ignore */ }
   }
 
   /* ---------- State ---------- */
   var current = load(LS_CURRENT, null);   // { goal, difficulty, tasks: [] }
   var history = load(LS_HISTORY, []);
   if (!Array.isArray(history)) history = [];
+  var user = load(LS_USER, null);
 
   var selectedPoints = 1;  // points chosen in the add-task picker
 
-  /* ---------- DOM shortcuts ---------- */
+  /* ---------- DOM helpers ---------- */
   function $(id) { return document.getElementById(id); }
   function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
 
   var DIFFICULTY = {
-    10: { name: 'Easy', cls: 'easy' },
+    10: { name: 'Easy',   cls: 'easy' },
+    15: { name: 'Light',  cls: 'light' },
     20: { name: 'Medium', cls: 'medium' },
-    30: { name: 'Hard', cls: 'hard' }
+    25: { name: 'Tough',  cls: 'tough' },
+    30: { name: 'Hard',   cls: 'hard' }
   };
+  var TIERS = [10, 15, 20, 25, 30];
 
   /* ===================== Navigation ===================== */
   function showScreen(name) {
@@ -50,7 +59,6 @@
     var target = $('screen-' + name);
     if (target) target.classList.add('active');
 
-    // nav highlight
     var navBtns = document.querySelectorAll('.nav-btn');
     for (var j = 0; j < navBtns.length; j++) {
       var n = navBtns[j].getAttribute('data-nav');
@@ -65,6 +73,7 @@
   function startDay(goal) {
     current = { goal: goal, difficulty: DIFFICULTY[goal].name, tasks: [], createdAt: Date.now() };
     save(LS_CURRENT, current);
+    selectedPoints = 1;
     renderTasks();
     showScreen('tasks');
   }
@@ -76,7 +85,6 @@
         startDay(parseInt(this.getAttribute('data-goal'), 10));
       });
     }
-    // resume hint if a day is already in progress
     var hint = $('resume-hint');
     if (current && current.goal) {
       hint.hidden = false;
@@ -87,14 +95,19 @@
     }
   }
 
-  /* ===================== Task screen ===================== */
+  /* ===================== Points helpers ===================== */
+  // Points actually earned (completed tasks) — drives the top tally.
   function earnedPoints() {
     if (!current) return 0;
-    return current.tasks.reduce(function (sum, t) {
-      return sum + (t.done ? t.points : 0);
-    }, 0);
+    return current.tasks.reduce(function (s, t) { return s + (t.done ? t.points : 0); }, 0);
+  }
+  // Points committed to the list (all tasks) — capped by the goal/budget.
+  function committedPoints() {
+    if (!current) return 0;
+    return current.tasks.reduce(function (s, t) { return s + t.points; }, 0);
   }
 
+  /* ===================== Task screen ===================== */
   function renderProgress() {
     if (!current) return;
     var earned = earnedPoints();
@@ -116,6 +129,78 @@
     var badge = $('diff-badge');
     badge.textContent = d.name;
     badge.className = 'diff-badge ' + d.cls;
+  }
+
+  // Enforce the point budget in the UI: capacity text, disabled controls,
+  // valid point options, and the increase-difficulty buttons.
+  function renderCapacity() {
+    if (!current) return;
+    var committed = committedPoints();
+    var goal = current.goal;
+    var left = Math.max(0, goal - committed);
+
+    var capBar = $('capacity-bar');
+    if (left > 0) {
+      $('capacity-text').textContent =
+        committed + ' of ' + goal + ' points planned · ' + left + ' left to assign';
+      capBar.classList.remove('full');
+    } else {
+      $('capacity-text').textContent = 'Budget full — ' + committed + '/' + goal + ' points planned';
+      capBar.classList.add('full');
+    }
+
+    // Add form: disabled when there's no room left.
+    var nameInput = $('task-name');
+    var addBtn = document.querySelector('.add-btn');
+    nameInput.disabled = left <= 0;
+    addBtn.disabled = left <= 0;
+    nameInput.placeholder = left <= 0
+      ? 'Budget full — increase difficulty to add more'
+      : 'Add a task…';
+
+    // Point buttons: disable any value that would exceed the remaining budget.
+    var ptBtns = document.querySelectorAll('.pt-btn');
+    var maxValid = Math.min(3, left);
+    if (maxValid >= 1) {
+      if (selectedPoints > maxValid) selectedPoints = maxValid;
+      if (selectedPoints < 1) selectedPoints = 1;
+    }
+    for (var i = 0; i < ptBtns.length; i++) {
+      var pts = parseInt(ptBtns[i].getAttribute('data-pts'), 10);
+      var disabled = left <= 0 || pts > left;
+      ptBtns[i].disabled = disabled;
+      ptBtns[i].classList.toggle('disabled', disabled);
+      ptBtns[i].classList.toggle('selected', !disabled && pts === selectedPoints);
+    }
+
+    renderUpgradeOptions();
+  }
+
+  function renderUpgradeOptions() {
+    var box = $('upgrade-options');
+    var label = $('upgrade-label');
+    box.innerHTML = '';
+    var higher = TIERS.filter(function (t) { return t > current.goal; });
+    if (!higher.length) {
+      label.textContent = "You're at the top tier (30 pts) 🏔️";
+      return;
+    }
+    label.textContent = 'Need more room? Increase difficulty:';
+    higher.forEach(function (t) {
+      var b = el('button', 'upgrade-btn ' + DIFFICULTY[t].cls);
+      b.type = 'button';
+      b.textContent = '↑ ' + t + ' · ' + DIFFICULTY[t].name;
+      b.addEventListener('click', function () { increaseDifficulty(t); });
+      box.appendChild(b);
+    });
+  }
+
+  function increaseDifficulty(goal) {
+    if (!current || goal <= current.goal) return;
+    current.goal = goal;
+    current.difficulty = DIFFICULTY[goal].name;
+    save(LS_CURRENT, current);
+    renderTasks();
   }
 
   function renderTasks() {
@@ -150,15 +235,17 @@
       listEl.appendChild(li);
     });
 
-    // disable "end day" until there is at least one task
     $('end-day-btn').disabled = current.tasks.length === 0;
     renderProgress();
+    renderCapacity();
   }
 
   function addTask(name, points) {
     name = (name || '').trim();
     if (!name) return false;
     points = Math.max(1, Math.min(3, parseInt(points, 10) || 1));
+    // Hard guard: never let the list exceed the point budget.
+    if (committedPoints() + points > current.goal) return false;
     current.tasks.push({
       id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
       name: name,
@@ -177,7 +264,6 @@
     t.done = !t.done;
     save(LS_CURRENT, current);
     renderTasks();
-    // celebrate the moment the goal is first reached
     if (!wasComplete && earnedPoints() >= current.goal) burstConfetti();
   }
 
@@ -188,13 +274,13 @@
   }
 
   function initTaskScreen() {
-    // points picker
     var ptBtns = document.querySelectorAll('.pt-btn');
     for (var i = 0; i < ptBtns.length; i++) {
       ptBtns[i].addEventListener('click', function () {
+        if (this.disabled) return;
+        selectedPoints = parseInt(this.getAttribute('data-pts'), 10);
         for (var k = 0; k < ptBtns.length; k++) ptBtns[k].classList.remove('selected');
         this.classList.add('selected');
-        selectedPoints = parseInt(this.getAttribute('data-pts'), 10);
       });
     }
 
@@ -261,7 +347,6 @@
     history.push(record);
     save(LS_HISTORY, history);
 
-    // clear the in-progress day
     current = null;
     save(LS_CURRENT, null);
 
@@ -297,8 +382,6 @@
 
   function renderAnalytics() {
     showScreen('analytics');
-
-    // --- summary stats ---
     $('stat-days').textContent = history.length;
 
     if (history.length) {
@@ -310,7 +393,6 @@
       });
       $('stat-best').textContent = best.grade;
 
-      // current goal-reaching streak (from most recent backwards)
       var streak = 0;
       for (var i = history.length - 1; i >= 0; i--) {
         if (history[i].reachedGoal) streak++; else break;
@@ -355,7 +437,6 @@
     $('history-empty').hidden = history.length > 0;
     $('clear-history-btn').hidden = history.length === 0;
 
-    // newest first
     history.slice().reverse().forEach(function (d) {
       var tr = el('tr');
       tr.appendChild(td(fullDate(d.date)));
@@ -377,11 +458,7 @@
   }
 
   function td(text) { var c = el('td'); c.textContent = text; return c; }
-
-  function shortDate(iso) {
-    var d = new Date(iso);
-    return (d.getMonth() + 1) + '/' + d.getDate();
-  }
+  function shortDate(iso) { var d = new Date(iso); return (d.getMonth() + 1) + '/' + d.getDate(); }
   function fullDate(iso) {
     var d = new Date(iso);
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -394,6 +471,81 @@
       save(LS_HISTORY, history);
       renderAnalytics();
     });
+  }
+
+  /* ===================== Google Sign-In ===================== */
+  // Decode a JWT payload (no verification — used only for display/personalization).
+  function decodeJwt(token) {
+    var part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    var json = decodeURIComponent(atob(part).split('').map(function (c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(json);
+  }
+
+  function handleCredential(resp) {
+    try {
+      var p = decodeJwt(resp.credential);
+      user = { name: p.name, given_name: p.given_name, email: p.email, picture: p.picture, sub: p.sub };
+      save(LS_USER, user);
+      renderAuth();
+    } catch (e) { /* ignore malformed token */ }
+  }
+
+  function renderAuth() {
+    var chip = $('profile-chip');
+    var signedout = $('auth-signedout');
+    var signedin = $('auth-signedin');
+    if (user) {
+      if (chip) {
+        chip.hidden = false;
+        $('profile-avatar').src = user.picture || '';
+        $('profile-name').textContent = user.given_name || user.name || 'You';
+      }
+      if (signedout) signedout.hidden = true;
+      if (signedin) {
+        signedin.hidden = false;
+        $('auth-avatar').src = user.picture || '';
+        $('auth-hello').textContent = 'Signed in as ' + (user.name || user.email || 'you');
+      }
+    } else {
+      if (chip) chip.hidden = true;
+      if (signedout) signedout.hidden = false;
+      if (signedin) signedin.hidden = true;
+    }
+  }
+
+  function initGoogle() {
+    var setup = $('auth-setup');
+    var host = $('g_id_signin');
+    if (!GOOGLE_CLIENT_ID) {
+      if (setup) setup.hidden = false;
+      if (host) host.style.display = 'none';
+      return;
+    }
+    if (setup) setup.hidden = true;
+    if (!(window.google && window.google.accounts && window.google.accounts.id)) return;
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredential,
+      auto_select: false
+    });
+    if (host) {
+      host.style.display = '';
+      window.google.accounts.id.renderButton(host, {
+        type: 'standard', theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with'
+      });
+    }
+  }
+  // GSI calls this global once its script finishes loading.
+  window.onGoogleLibraryLoad = initGoogle;
+
+  function signOut() {
+    user = null;
+    save(LS_USER, null);
+    try { if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect(); }
+    catch (e) { /* ignore */ }
+    renderAuth();
   }
 
   /* ===================== Confetti ===================== */
@@ -444,29 +596,32 @@
   }
 
   /* ===================== Boot ===================== */
+  function goHome() {
+    if (current && current.goal) { renderTasks(); showScreen('tasks'); }
+    else { showScreen('difficulty'); }
+  }
+
   function init() {
     initDifficultyScreen();
     initTaskScreen();
     initResultsScreen();
     initAnalyticsScreen();
 
-    // top nav
     var navBtns = document.querySelectorAll('.nav-btn');
     for (var i = 0; i < navBtns.length; i++) {
       navBtns[i].addEventListener('click', function () {
-        var n = this.getAttribute('data-nav');
-        if (n === 'analytics') { renderAnalytics(); }
-        else { goHome(); }
+        if (this.getAttribute('data-nav') === 'analytics') renderAnalytics();
+        else goHome();
       });
     }
     $('brand-home').addEventListener('click', goHome);
 
-    // open to the right place
-    if (current && current.goal) { renderTasks(); showScreen('tasks'); }
-    else { showScreen('difficulty'); }
-  }
+    // Auth wiring
+    var soA = $('auth-signout'); if (soA) soA.addEventListener('click', signOut);
+    var soB = $('signout-btn');  if (soB) soB.addEventListener('click', signOut);
+    renderAuth();
+    initGoogle(); // in case the GSI script already loaded
 
-  function goHome() {
     if (current && current.goal) { renderTasks(); showScreen('tasks'); }
     else { showScreen('difficulty'); }
   }

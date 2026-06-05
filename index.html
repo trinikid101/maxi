@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#6c5ce7" />
-  <meta name="description" content="DayQuest — gamify your day. Pick a difficulty, build a task list, earn points, and grade your day A–F." />
+  <meta name="description" content="DayQuest — gamify your day. Pick a difficulty, build a task list within your point budget, earn points, and grade your day A–F." />
   <title>DayQuest — Gamify Your Day</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
+  <!-- Google Identity Services (Sign in with Google) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="app">
@@ -19,32 +20,76 @@
         <span class="logo">🎯</span>
         <span class="brand-name">DayQuest</span>
       </div>
-      <nav class="nav">
-        <button class="nav-btn" data-nav="home">Today</button>
-        <button class="nav-btn" data-nav="analytics">Analytics</button>
-      </nav>
+      <div class="topbar-right">
+        <nav class="nav">
+          <button class="nav-btn" data-nav="home">Today</button>
+          <button class="nav-btn" data-nav="analytics">Analytics</button>
+        </nav>
+        <div class="profile-chip" id="profile-chip" hidden>
+          <img id="profile-avatar" alt="" referrerpolicy="no-referrer" />
+          <span id="profile-name"></span>
+          <button class="signout-btn" id="signout-btn" title="Sign out">⎋</button>
+        </div>
+      </div>
     </header>
 
     <main class="screens">
 
       <!-- ===================== Difficulty Screen ===================== -->
       <section id="screen-difficulty" class="screen active">
+
+        <!-- Google login section -->
+        <div class="auth-card" id="auth-card">
+          <div class="auth-signedout" id="auth-signedout">
+            <p class="auth-title">Sign in to personalize your quests</p>
+            <div id="g_id_signin"></div>
+            <p class="auth-setup" id="auth-setup" hidden>
+              <strong>Google Sign-In isn't configured yet.</strong><br />
+              Create an OAuth 2.0 <em>Web</em> Client ID in the
+              Google Cloud Console, add your site to “Authorized JavaScript
+              origins”, then paste the ID into <code>GOOGLE_CLIENT_ID</code>
+              at the top of <code>js/app.js</code>.
+            </p>
+            <p class="auth-skip">Optional — DayQuest works fully without signing in.</p>
+          </div>
+          <div class="auth-signedin" id="auth-signedin" hidden>
+            <img id="auth-avatar" class="auth-avatar" alt="" referrerpolicy="no-referrer" />
+            <div class="auth-signedin-text">
+              <p class="auth-hello" id="auth-hello">Signed in</p>
+              <button class="link-btn" id="auth-signout">Sign out</button>
+            </div>
+          </div>
+        </div>
+
         <div class="hero">
           <h1>Choose today's challenge</h1>
           <p class="sub">How many points will you commit to earning today?</p>
         </div>
-        <div class="difficulty-grid">
+
+        <div class="difficulty-grid" id="difficulty-grid">
           <button class="diff-card easy" data-goal="10">
             <span class="diff-emoji">🌱</span>
             <span class="diff-name">Easy</span>
             <span class="diff-points">10 pts</span>
             <span class="diff-desc">A gentle, doable day</span>
           </button>
+          <button class="diff-card light" data-goal="15">
+            <span class="diff-emoji">🍃</span>
+            <span class="diff-name">Light</span>
+            <span class="diff-points">15 pts</span>
+            <span class="diff-desc">Warm up the engine</span>
+          </button>
           <button class="diff-card medium" data-goal="20">
             <span class="diff-emoji">🔥</span>
             <span class="diff-name">Medium</span>
             <span class="diff-points">20 pts</span>
             <span class="diff-desc">A solid, productive day</span>
+          </button>
+          <button class="diff-card tough" data-goal="25">
+            <span class="diff-emoji">💪</span>
+            <span class="diff-name">Tough</span>
+            <span class="diff-points">25 pts</span>
+            <span class="diff-desc">Push past comfortable</span>
           </button>
           <button class="diff-card hard" data-goal="30">
             <span class="diff-emoji">⚡</span>
@@ -53,6 +98,7 @@
             <span class="diff-desc">Go big — beast mode</span>
           </button>
         </div>
+
         <p class="resume-hint" id="resume-hint" hidden>
           You have a day in progress. <button class="link-btn" id="resume-btn">Resume it →</button>
         </p>
@@ -86,6 +132,17 @@
           </div>
           <button type="submit" class="add-btn" aria-label="Add task">＋</button>
         </form>
+
+        <!-- Point budget / capacity -->
+        <div class="capacity-bar" id="capacity-bar">
+          <span id="capacity-text">0 of 10 points planned · 10 left to assign</span>
+        </div>
+
+        <!-- Increase difficulty (raises the point budget) -->
+        <div class="upgrade-row" id="upgrade-row">
+          <span class="upgrade-label" id="upgrade-label">Increase difficulty:</span>
+          <div class="upgrade-options" id="upgrade-options"></div>
+        </div>
 
         <ul class="task-list" id="task-list"></ul>
         <p class="empty-state" id="empty-state">No tasks yet. Add your first one above 👆</p>
