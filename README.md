@@ -1,114 +1,85 @@
-# 🚐 Maxi Taxi Madness: Trini Road King
+# 🎯 DayQuest — Gamify Your Day
 
-A free-to-play arcade driving + business sim inspired by Trinidad & Tobago's
-iconic maxi taxis. Pick up passengers, dodge potholes and goats, blow your
-horn, bank your fares, upgrade your maxi, and climb the Road King ranks.
+A tiny, no-fuss web app that turns your to-do list into a daily quest.
 
-> **What's in this repo:** a **fully playable real-time 3D game** (Three.js,
-> GTA-style chase camera) that runs in any browser — desktop or mobile — with
-> **no build step**. You drive a 3D maxi down an endless Trini street: pick up
-> passengers, dodge hazards, bank fares, and upgrade. A
-> [production design document](DESIGN.md) maps it to the full Unity/Unreal
-> mobile vision (open world, multiplayer, store deployment).
->
-> Three.js is **vendored** at `vendor/three.module.js`, so the game has zero
-> network dependencies and works fully offline.
+1. **Pick a difficulty** — commit to earning **10 (Easy)**, **20 (Medium)** or **30 (Hard)** points today.
+2. **Build your task list** — add tasks and assign each one **1–3 points**.
+3. **Tick them off** — every completed task fills the bar at the top (e.g. a 2‑point task moves you `2/10`, another moves you `4/10`…).
+4. **End the day** — get a **score out of 10**, a **percentage**, and an **A–F grade**, just like an exam.
+5. **Track progress** — every finished day is saved to a built-in **Analytics dashboard** (chart + history + stats).
+
+No accounts, no servers, no build step. Everything is stored locally in your
+browser via `localStorage`, so it works fully offline and is ready to drop onto
+static hosting like **Hostinger**.
 
 ---
 
-## ▶️ Play it now
+## ▶️ Run it locally
 
-No install, no tooling. Just open the game:
+Just open `index.html` in a browser. That's it.
+
+Or serve it (recommended, so paths behave exactly like production):
 
 ```bash
-# Option A — double-click index.html in a file browser
-# Option B — serve it locally (recommended; enables audio + screenshots)
-cd maxi
+# Python
 python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
-On a phone: serve it on your LAN and open the URL in mobile Safari/Chrome,
-or "Add to Home Screen" for a fullscreen, app-like experience.
+---
+
+## ☁️ Deploy to Hostinger
+
+This is a plain static site, so deployment is copy‑and‑paste:
+
+1. Log in to **hPanel** → your hosting plan → **File Manager** (or use FTP).
+2. Open the `public_html` folder.
+3. Upload the contents of this repo **into** `public_html`:
+   - `index.html`
+   - `css/style.css`
+   - `js/app.js`
+4. Visit your domain — DayQuest is live.
+
+> Tip: upload the files themselves into `public_html` (so `index.html` sits at
+> the root), not the parent folder.
 
 ---
 
-## 🎮 Controls
+## 📊 How scoring works
 
-| Action | Touch (phone) | Keyboard (desktop) |
-| --- | --- | --- |
-| Steer | Drag the screen left/right | `A` / `D` or `←` / `→` |
-| Brake | Hold **BRAKE** button | `S` or `↓` |
-| Horn  | Hold **HORN** button | `Space` |
-| Gas   | Automatic (manage your fuel!) | Automatic |
+| Term         | Meaning                                                        |
+|--------------|----------------------------------------------------------------|
+| **Goal**     | 10 / 20 / 30 depending on the difficulty you picked.           |
+| **Earned**   | Sum of points from the tasks you ticked off.                   |
+| **Percentage** | `earned ÷ goal`, capped at 100%.                             |
+| **Score /10**  | The percentage expressed out of 10 (e.g. 75% → 7.5/10).      |
+| **Grade**    | A ≥ 90% · B ≥ 80% · C ≥ 70% · D ≥ 60% · E ≥ 50% · F otherwise. |
 
-**Goal:** steer into a waving passenger's lane — their ground ring glows green
-and they hop in — then reach the glowing green 🏁 beacon to bank the fare.
-Survive the shift, dodge hazards, and keep an eye on your fuel.
-
----
-
-## ✅ What the prototype implements (from the brief)
-
-- **Core loop** — pick up → drive → drop off → earn → upgrade → repeat, in
-  short 2–3 minute shifts.
-- **The maxi, recreated** — white body with a colour **band stripe**, big
-  windscreen, drawn procedurally to echo the reference photo.
-- **Three bands with unique bonuses** — 🔴 Red (faster acceleration),
-  🟢 Green (better fuel economy), 🟡 Yellow (more passenger income).
-- **Passenger system** — School Child, Office Worker, Market Vendor, Tourist,
-  Drunk Limer, Politician, and a rare Celebrity, each with fares, tips, and
-  Trini one-liners.
-- **Funny Trini events** — goats crossing, Carnival road blocks, flash
-  flooding, police permit checks, soca blasting, maxi-vs-maxi road rage, and
-  more.
-- **Addictive reward cadence** — a route bonus every 30 seconds so the player
-  is never far from a dopamine hit.
-- **Upgrade system / garage** — Engine, Suspension, Brakes, Horn, and Fuel
-  Tank, with a scaling cost curve and persistent levels.
-- **Viral results screen** — "Horn Pressed: 178", "Near Misses: 43",
-  "Passengers Annoyed: 12", a shareable hashtag card, and PNG screenshot
-  export.
-- **Async multiplayer leaderboard** — your best score ranked against rival
-  drivers.
-- **Idle income** — your maxi empire earns cash while you're away.
-- **Persistence** — bank, day, band choice, and upgrades saved via
-  `localStorage` (the stand-in for cloud save).
-- **Mobile-first + 60 FPS** — `requestAnimationFrame` loop, DPR-aware canvas,
-  touch controls, safe-area insets, WebAudio horn/ding SFX.
-
-See [DESIGN.md](DESIGN.md) for the full feature map, including everything that
-belongs in the production 3D build (open-world map, Battle Pass, rare skins
-like the Carnival King / Gold / Chrome / Zombie maxis, tournaments, push
-notifications, etc.).
+A **goal streak** counts how many of your most recent days hit their target.
 
 ---
 
 ## 🗂️ Project structure
 
 ```
-index.html              # markup: WebGL canvas, HUD, menus, results
-css/style.css           # Caribbean-palette, mobile-first styling
-vendor/three.module.js  # vendored Three.js r160 (no CDN, works offline)
-js/data.js              # config: bands, passengers, events, cities, upgrades, save/load
-js/ui.js                # screen routing, HUD, garage, leaderboard, viral cards
-js/game3d.js            # 3D engine: scene, chase cam, loop, input, run lifecycle
-js/game.js, js/entities.js  # legacy 2D Canvas prototype (kept for reference, not loaded)
-DESIGN.md               # production design doc (full mobile vision + roadmap)
+index.html      → markup for all four screens (difficulty, tasks, results, analytics)
+css/style.css   → all styling (dark theme, responsive, mobile-friendly)
+js/app.js       → all logic + localStorage persistence (no dependencies)
 ```
-
-Vanilla JS + Three.js (vendored) — zero build, zero CDN. The original 2D
-Canvas prototype is preserved under `js/game.js` + `js/entities.js` for
-reference; `index.html` now loads the 3D build (`js/game3d.js`).
 
 ---
 
-## 🛣️ From prototype to store-ready
+## 🔒 Where is my data?
 
-This web build is the **playable design spec**. The next milestone is porting
-the validated loop into Unity (recommended for mobile) with 3D stylised
-assets, the open-world Trinidad map, live-ops backend (leaderboards,
-tournaments, cloud save), and store builds for iOS + Android. The full plan,
-including tech stack and a phased roadmap, lives in [DESIGN.md](DESIGN.md).
+Entirely in your browser (`localStorage`). Nothing is uploaded anywhere.
+Clearing your browser data — or using the **Clear all** button in Analytics —
+removes your history.
 
-🇹🇹 *"One more run."*
+---
+
+## 🛣️ Roadmap (future)
+
+- Mobile app wrapper (the core is already touch-friendly).
+- Optional cloud sync / accounts.
+- Recurring tasks and templates.
+- Reminders / notifications.

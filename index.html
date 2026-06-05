@@ -1,105 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#e63946" />
-<title>Maxi Taxi Madness: Trini Road King</title>
-<link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6c5ce7" />
+  <meta name="description" content="DayQuest — gamify your day. Pick a difficulty, build a task list, earn points, and grade your day A–F." />
+  <title>DayQuest — Gamify Your Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
 </head>
 <body>
   <div id="app">
-    <canvas id="game"></canvas>
 
-    <!-- HUD (in-run) -->
-    <div id="hud" class="hidden">
-      <div class="hud-top">
-        <div class="stat money"><span class="ico">$</span><span id="hud-money">0</span></div>
-        <div class="stat"><span class="ico">★</span><span id="hud-xp">0</span></div>
-        <div class="fuel-wrap" title="Fuel">
-          <div class="fuel-bar"><div id="fuel-fill"></div></div>
+    <!-- ===================== Header ===================== -->
+    <header class="topbar">
+      <div class="brand" id="brand-home" title="Home">
+        <span class="logo">🎯</span>
+        <span class="brand-name">DayQuest</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn" data-nav="home">Today</button>
+        <button class="nav-btn" data-nav="analytics">Analytics</button>
+      </nav>
+    </header>
+
+    <main class="screens">
+
+      <!-- ===================== Difficulty Screen ===================== -->
+      <section id="screen-difficulty" class="screen active">
+        <div class="hero">
+          <h1>Choose today's challenge</h1>
+          <p class="sub">How many points will you commit to earning today?</p>
         </div>
-        <div class="stat timer"><span class="ico">⏱</span><span id="hud-time">120</span></div>
-      </div>
-      <div id="reward-pop" class="reward-pop hidden"></div>
-      <div id="event-toast" class="event-toast hidden"></div>
-      <div class="hud-bottom">
-        <button id="btn-horn" class="touch-btn horn">HORN<span>📢</span></button>
-        <button id="btn-brake" class="touch-btn brake">BRAKE</button>
-      </div>
-      <div id="fare-card" class="fare-card hidden"></div>
-    </div>
+        <div class="difficulty-grid">
+          <button class="diff-card easy" data-goal="10">
+            <span class="diff-emoji">🌱</span>
+            <span class="diff-name">Easy</span>
+            <span class="diff-points">10 pts</span>
+            <span class="diff-desc">A gentle, doable day</span>
+          </button>
+          <button class="diff-card medium" data-goal="20">
+            <span class="diff-emoji">🔥</span>
+            <span class="diff-name">Medium</span>
+            <span class="diff-points">20 pts</span>
+            <span class="diff-desc">A solid, productive day</span>
+          </button>
+          <button class="diff-card hard" data-goal="30">
+            <span class="diff-emoji">⚡</span>
+            <span class="diff-name">Hard</span>
+            <span class="diff-points">30 pts</span>
+            <span class="diff-desc">Go big — beast mode</span>
+          </button>
+        </div>
+        <p class="resume-hint" id="resume-hint" hidden>
+          You have a day in progress. <button class="link-btn" id="resume-btn">Resume it →</button>
+        </p>
+      </section>
 
-    <!-- Main Menu -->
-    <div id="menu" class="screen">
-      <div class="logo">
-        <div class="logo-top">MAXI TAXI</div>
-        <div class="logo-mid">MADNESS</div>
-        <div class="logo-sub">★ TRINI ROAD KING ★</div>
-      </div>
-      <div class="band-pick">
-        <h3>Choose Your Band</h3>
-        <div class="bands" id="band-select"></div>
-        <p class="band-bonus" id="band-bonus"></p>
-      </div>
-      <button id="btn-play" class="big-btn">DRIVE! 🚐</button>
-      <div class="menu-row">
-        <button id="btn-garage" class="mini-btn">🔧 Garage</button>
-        <button id="btn-leaderboard" class="mini-btn">🏆 Ranks</button>
-        <button id="btn-howto" class="mini-btn">❓ How</button>
-      </div>
-      <div class="bankline">Bank: <span id="menu-bank">$0</span> · Day <span id="menu-day">1</span></div>
-    </div>
+      <!-- ===================== Task List Screen ===================== -->
+      <section id="screen-tasks" class="screen">
+        <div class="progress-panel" id="progress-panel">
+          <div class="progress-top">
+            <div class="progress-tally">
+              <span id="tally-earned">0</span><span class="slash">/</span><span id="tally-goal">10</span>
+              <span class="tally-label">points</span>
+            </div>
+            <div class="diff-badge" id="diff-badge">Easy</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-meta">
+            <span id="progress-pct">0%</span>
+            <span id="progress-remaining">10 to go</span>
+          </div>
+        </div>
 
-    <!-- Garage / Upgrades -->
-    <div id="garage" class="screen hidden">
-      <h2>🔧 The Garage</h2>
-      <div class="bankline center">Cash: <span id="garage-bank">$0</span></div>
-      <div id="upgrade-list" class="upgrade-list"></div>
-      <button class="big-btn back" data-back>← Back</button>
-    </div>
+        <form class="add-task" id="add-task-form">
+          <input type="text" id="task-name" placeholder="Add a task…" maxlength="80" autocomplete="off" />
+          <div class="points-picker" role="group" aria-label="Points for this task">
+            <button type="button" class="pt-btn selected" data-pts="1">1</button>
+            <button type="button" class="pt-btn" data-pts="2">2</button>
+            <button type="button" class="pt-btn" data-pts="3">3</button>
+          </div>
+          <button type="submit" class="add-btn" aria-label="Add task">＋</button>
+        </form>
 
-    <!-- Leaderboard -->
-    <div id="leaderboard" class="screen hidden">
-      <h2>🏆 Road King Ranks</h2>
-      <div id="lb-list" class="lb-list"></div>
-      <button class="big-btn back" data-back>← Back</button>
-    </div>
+        <ul class="task-list" id="task-list"></ul>
+        <p class="empty-state" id="empty-state">No tasks yet. Add your first one above 👆</p>
 
-    <!-- How to play -->
-    <div id="howto" class="screen hidden">
-      <h2>❓ How to Drive</h2>
-      <ul class="howto-list">
-        <li>🚐 <b>Steer:</b> drag anywhere on screen, or A/D &amp; arrow keys.</li>
-        <li>⛽ <b>Gas:</b> you roll automatically — manage your <b>fuel</b>!</li>
-        <li>🛑 <b>Brake:</b> hold the BRAKE button (or S / ↓).</li>
-        <li>🙋 <b>Pick up:</b> steer into a waving passenger's lane — their ring
-            glows green, then they hop in.</li>
-        <li>🏁 <b>Drop off:</b> reach the glowing green beacon to bank the fare.</li>
-        <li>🕳️ <b>Dodge:</b> potholes, goats, limers &amp; police roadblocks.</li>
-        <li>📢 <b>Horn:</b> scares goats off the road &amp; pleases impatient passengers.</li>
-      </ul>
-      <button class="big-btn back" data-back>← Back</button>
-    </div>
+        <div class="tasks-actions">
+          <button class="btn ghost" id="abandon-btn">Start over</button>
+          <button class="btn primary" id="end-day-btn">End day &amp; get my score</button>
+        </div>
+      </section>
 
-    <!-- Results / viral stats -->
-    <div id="results" class="screen hidden">
-      <h2 id="result-title">Shift Done!</h2>
-      <div class="payout">+<span id="result-pay">$0</span></div>
-      <div id="result-stats" class="result-stats"></div>
-      <div class="share-row">
-        <button id="btn-share" class="mini-btn share">📲 Share Clip</button>
-        <button id="btn-screenshot" class="mini-btn">📸 Screenshot</button>
-      </div>
-      <div id="share-card" class="share-card hidden"></div>
-      <button id="btn-again" class="big-btn">One More Run 🚐</button>
-      <button class="mini-btn back" data-back>Menu</button>
-    </div>
+      <!-- ===================== Results Screen ===================== -->
+      <section id="screen-results" class="screen">
+        <div class="result-card">
+          <div class="grade-ring" id="grade-ring">
+            <span class="grade-letter" id="grade-letter">A</span>
+          </div>
+          <h2 id="result-title">Day complete!</h2>
+          <p class="result-line">
+            You scored <strong id="result-score">10</strong>/10
+            (<strong id="result-pct">100%</strong>)
+          </p>
+          <p class="result-detail" id="result-detail">You earned 10 of 10 points across 4 tasks.</p>
+          <p class="result-message" id="result-message"></p>
+          <div class="result-actions">
+            <button class="btn primary" id="new-day-btn">Start a new day</button>
+            <button class="btn ghost" id="view-analytics-btn">View analytics</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Analytics Screen ===================== -->
+      <section id="screen-analytics" class="screen">
+        <div class="hero compact">
+          <h1>Your analytics</h1>
+          <p class="sub">Every day you complete is logged here.</p>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-box"><span class="stat-val" id="stat-days">0</span><span class="stat-key">Days logged</span></div>
+          <div class="stat-box"><span class="stat-val" id="stat-avg">–</span><span class="stat-key">Avg score</span></div>
+          <div class="stat-box"><span class="stat-val" id="stat-best">–</span><span class="stat-key">Best grade</span></div>
+          <div class="stat-box"><span class="stat-val" id="stat-streak">0</span><span class="stat-key">Goal streak</span></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Last 14 days</h3>
+          <div class="chart" id="chart"></div>
+        </div>
+
+        <div class="history-card">
+          <div class="history-head">
+            <h3>History</h3>
+            <button class="link-btn danger" id="clear-history-btn">Clear all</button>
+          </div>
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr><th>Date</th><th>Level</th><th>Points</th><th>Score</th><th>%</th><th>Grade</th></tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="history-empty">No days logged yet. Finish a day to see it here.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>DayQuest · gamify your day</span>
+    </footer>
   </div>
 
-  <script src="js/data.js"></script>
-  <script src="js/ui.js"></script>
-  <script type="module" src="js/game3d.js"></script>
+  <!-- Confetti canvas (celebration) -->
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
