@@ -3,25 +3,16 @@
  * Pick a difficulty (10/15/20/25/30 pts), build a task list (1–3 pts each)
  * WITHIN that point budget, tick tasks off to fill the bar, then end the day
  * for a score + A–F grade. Every finished day is stored in localStorage and
- * shown in Analytics. Optional Google Sign-In personalizes the app.
+ * shown in Analytics.
  * No build step — drop onto any static host (e.g. Hostinger).
  * ==================================================== */
 
 (function () {
   'use strict';
 
-  /* ===================== CONFIG ===================== */
-  /* Paste your Google OAuth 2.0 *Web* Client ID here to enable Sign in with
-   * Google. Leave it as '' to hide the button and show setup instructions.
-   * Create one at https://console.cloud.google.com/apis/credentials and add
-   * your site (and http://localhost:8000 for local testing) to the
-   * "Authorized JavaScript origins". */
-  var GOOGLE_CLIENT_ID = '';
-
   /* ---------- Storage keys ---------- */
   var LS_CURRENT = 'dayquest.current.v1';   // the in-progress day (or null)
   var LS_HISTORY = 'dayquest.history.v1';   // array of finished days
-  var LS_USER    = 'dayquest.user.v1';      // signed-in Google profile (or null)
 
   function load(key, fallback) {
     try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -35,7 +26,6 @@
   var current = load(LS_CURRENT, null);   // { goal, difficulty, tasks: [] }
   var history = load(LS_HISTORY, []);
   if (!Array.isArray(history)) history = [];
-  var user = load(LS_USER, null);
 
   var selectedPoints = 1;  // points chosen in the add-task picker
 
@@ -484,81 +474,6 @@
     });
   }
 
-  /* ===================== Google Sign-In ===================== */
-  // Decode a JWT payload (no verification — used only for display/personalization).
-  function decodeJwt(token) {
-    var part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    var json = decodeURIComponent(atob(part).split('').map(function (c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(json);
-  }
-
-  function handleCredential(resp) {
-    try {
-      var p = decodeJwt(resp.credential);
-      user = { name: p.name, given_name: p.given_name, email: p.email, picture: p.picture, sub: p.sub };
-      save(LS_USER, user);
-      renderAuth();
-    } catch (e) { /* ignore malformed token */ }
-  }
-
-  function renderAuth() {
-    var chip = $('profile-chip');
-    var signedout = $('auth-signedout');
-    var signedin = $('auth-signedin');
-    if (user) {
-      if (chip) {
-        chip.hidden = false;
-        $('profile-avatar').src = user.picture || '';
-        $('profile-name').textContent = user.given_name || user.name || 'You';
-      }
-      if (signedout) signedout.hidden = true;
-      if (signedin) {
-        signedin.hidden = false;
-        $('auth-avatar').src = user.picture || '';
-        $('auth-hello').textContent = 'Signed in as ' + (user.name || user.email || 'you');
-      }
-    } else {
-      if (chip) chip.hidden = true;
-      if (signedout) signedout.hidden = false;
-      if (signedin) signedin.hidden = true;
-    }
-  }
-
-  function initGoogle() {
-    var setup = $('auth-setup');
-    var host = $('g_id_signin');
-    if (!GOOGLE_CLIENT_ID) {
-      if (setup) setup.hidden = false;
-      if (host) host.style.display = 'none';
-      return;
-    }
-    if (setup) setup.hidden = true;
-    if (!(window.google && window.google.accounts && window.google.accounts.id)) return;
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredential,
-      auto_select: false
-    });
-    if (host) {
-      host.style.display = '';
-      window.google.accounts.id.renderButton(host, {
-        type: 'standard', theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with'
-      });
-    }
-  }
-  // GSI calls this global once its script finishes loading.
-  window.onGoogleLibraryLoad = initGoogle;
-
-  function signOut() {
-    user = null;
-    save(LS_USER, null);
-    try { if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect(); }
-    catch (e) { /* ignore */ }
-    renderAuth();
-  }
-
   /* ===================== Confetti ===================== */
   var confettiCanvas, cctx, confettiPieces = [], confettiRAF = null;
   function burstConfetti() {
@@ -626,12 +541,6 @@
       });
     }
     $('brand-home').addEventListener('click', goHome);
-
-    // Auth wiring
-    var soA = $('auth-signout'); if (soA) soA.addEventListener('click', signOut);
-    var soB = $('signout-btn');  if (soB) soB.addEventListener('click', signOut);
-    renderAuth();
-    initGoogle(); // in case the GSI script already loaded
 
     if (current && current.goal) { renderTasks(); showScreen('tasks'); }
     else { showScreen('difficulty'); }

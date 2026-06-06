@@ -2,12 +2,11 @@
 
 A tiny, no-fuss web app that turns your to-do list into a daily quest.
 
-1. **(Optional) Sign in with Google** — personalizes the app with your name and photo.
-2. **Pick a difficulty** — commit to earning **10 (Easy)**, **15 (Light)**, **20 (Medium)**, **25 (Tough)** or **30 (Hard)** points today.
-3. **Build your task list** — add tasks and assign each one **1–3 points**, *within your point budget*. Once the tasks add up to your goal, the list is full and won't accept more — but you can **increase the difficulty** right there to make room.
-4. **Tick them off** — every completed task fills the bar at the top (e.g. a 2‑point task moves you `2/10`, another moves you `4/10`…).
-5. **End the day** — get a **score out of 10**, a **percentage**, and an **A–F grade**, just like an exam.
-6. **Track progress** — every finished day is saved to a built-in **Analytics dashboard** (chart + history + stats).
+1. **Pick a difficulty** — commit to earning **10 (Easy)**, **15 (Light)**, **20 (Medium)**, **25 (Tough)** or **30 (Hard)** points today.
+2. **Build your task list** — add tasks and assign each one **1–3 points**, *within your point budget*. Once the tasks add up to your goal, the list is full and won't accept more — but you can **change the difficulty** right there to make room.
+3. **Tick them off** — every completed task fills the bar at the top (e.g. a 2‑point task moves you `2/10`, another moves you `4/10`…).
+4. **End the day** — get a **score out of 10**, a **percentage**, and an **A–F grade**, just like an exam.
+5. **Track progress** — every finished day is saved to a built-in **Analytics dashboard** (chart + history + stats).
 
 No accounts, no servers, no build step. Everything is stored locally in your
 browser via `localStorage`, so it works fully offline and is ready to drop onto
@@ -43,24 +42,6 @@ This is a plain static site, so deployment is copy‑and‑paste:
 
 > Tip: upload the files themselves into `public_html` (so `index.html` sits at
 > the root), not the parent folder.
-
----
-
-## 🔐 Enable “Sign in with Google” (optional)
-
-Sign-in is optional and the app works fully without it. To turn it on:
-
-1. Go to the [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials).
-2. Create an **OAuth 2.0 Client ID** of type **Web application**.
-3. Under **Authorized JavaScript origins**, add the sites you'll use, e.g.
-   `http://localhost:8000` (local testing) and `https://yourdomain.com` (Hostinger).
-4. Copy the generated **Client ID** and paste it into the `GOOGLE_CLIENT_ID`
-   constant at the top of `js/app.js`.
-5. Reload — the **Sign in with Google** button appears on the first screen.
-
-> Sign-in is **client-side only** (no backend), so it's used purely to
-> personalize the app with your name/photo. Don't treat it as a security
-> boundary — that would require a server to verify the token.
 
 ---
 

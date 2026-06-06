@@ -8,8 +8,6 @@
   <title>DayQuest — Gamify Your Day</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
-  <!-- Google Identity Services (Sign in with Google) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="app">
@@ -20,46 +18,16 @@
         <span class="logo">🎯</span>
         <span class="brand-name">DayQuest</span>
       </div>
-      <div class="topbar-right">
-        <nav class="nav">
-          <button class="nav-btn" data-nav="home">Today</button>
-          <button class="nav-btn" data-nav="analytics">Analytics</button>
-        </nav>
-        <div class="profile-chip" id="profile-chip" hidden>
-          <img id="profile-avatar" alt="" referrerpolicy="no-referrer" />
-          <span id="profile-name"></span>
-          <button class="signout-btn" id="signout-btn" title="Sign out">⎋</button>
-        </div>
-      </div>
+      <nav class="nav">
+        <button class="nav-btn" data-nav="home">Today</button>
+        <button class="nav-btn" data-nav="analytics">Analytics</button>
+      </nav>
     </header>
 
     <main class="screens">
 
       <!-- ===================== Difficulty Screen ===================== -->
       <section id="screen-difficulty" class="screen active">
-
-        <!-- Google login section -->
-        <div class="auth-card" id="auth-card">
-          <div class="auth-signedout" id="auth-signedout">
-            <p class="auth-title">Sign in to personalize your quests</p>
-            <div id="g_id_signin"></div>
-            <p class="auth-setup" id="auth-setup" hidden>
-              <strong>Google Sign-In isn't configured yet.</strong><br />
-              Create an OAuth 2.0 <em>Web</em> Client ID in the
-              Google Cloud Console, add your site to “Authorized JavaScript
-              origins”, then paste the ID into <code>GOOGLE_CLIENT_ID</code>
-              at the top of <code>js/app.js</code>.
-            </p>
-            <p class="auth-skip">Optional — DayQuest works fully without signing in.</p>
-          </div>
-          <div class="auth-signedin" id="auth-signedin" hidden>
-            <img id="auth-avatar" class="auth-avatar" alt="" referrerpolicy="no-referrer" />
-            <div class="auth-signedin-text">
-              <p class="auth-hello" id="auth-hello">Signed in</p>
-              <button class="link-btn" id="auth-signout">Sign out</button>
-            </div>
-          </div>
-        </div>
 
         <div class="hero">
           <h1>Choose today's challenge</h1>

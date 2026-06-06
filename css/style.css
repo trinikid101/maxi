@@ -62,7 +62,6 @@ body {
 .brand { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
 .logo { font-size: 1.6rem; }
 .brand-name { font-weight: 800; font-size: 1.2rem; letter-spacing: .3px; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
 .nav { display: flex; gap: 6px; }
 .nav-btn {
   background: transparent;
@@ -297,42 +296,6 @@ body {
 
 /* ---------- Confetti ---------- */
 #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
-
-/* ---------- Profile chip (topbar) ---------- */
-.profile-chip {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--card); border: 1px solid var(--line);
-  border-radius: 999px; padding: 4px 6px 4px 4px;
-}
-.profile-chip img {
-  width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--card-2);
-}
-#profile-name { font-size: .85rem; font-weight: 600; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.signout-btn {
-  background: none; border: none; color: var(--muted); cursor: pointer;
-  font-size: 1rem; padding: 2px 4px; border-radius: 6px;
-}
-.signout-btn:hover { color: var(--bad); }
-@media (max-width: 480px) { #profile-name { display: none; } }
-
-/* ---------- Auth card (Google sign-in) ---------- */
-.auth-card {
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 18px; margin: 6px 0 4px; text-align: center;
-}
-.auth-title { font-weight: 700; margin-bottom: 12px; }
-#g_id_signin { display: flex; justify-content: center; min-height: 40px; }
-.auth-skip { color: var(--muted); font-size: .82rem; margin-top: 12px; }
-.auth-setup {
-  color: var(--muted); font-size: .82rem; line-height: 1.5; margin-top: 4px;
-  text-align: left; background: var(--bg-2); border: 1px solid var(--line);
-  border-radius: 10px; padding: 12px 14px;
-}
-.auth-setup code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 5px; font-size: .9em; }
-.auth-signedin { display: flex; align-items: center; gap: 14px; justify-content: center; }
-.auth-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--card-2); }
-.auth-signedin-text { text-align: left; }
-.auth-hello { font-weight: 700; }
 
 /* ---------- Capacity / point budget ---------- */
 .capacity-bar {
